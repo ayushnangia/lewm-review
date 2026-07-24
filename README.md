@@ -1,5 +1,22 @@
 # Co-author review document: Nested world models that can doubt themselves
 
+> **The story in 60 seconds (plain language):** A robot's world model squeezes each
+> camera image into 192 numbers and plans by imagining futures. We found that these
+> models are *monoliths*: nobody decides what each number means (train the same model
+> twice and the filing is pure coin flip), no smaller model exists inside one (a 94%
+> expert drops below random when you shrink its imagination), and it cannot doubt
+> itself (it rates TV static as an easier goal than a real photo). One added line of
+> training turns the monolith into Russian dolls: complete smaller models nested
+> inside the big one. The dolls are real - the small one plans as well as the whole
+> thing - and dolls can do what a loner cannot: **disagree**. When the inner doll and
+> the full model imagine different futures, the model has caught its own nonsense: it
+> refuses fake goals and flags its own doomed plans before acting.
+>
+> Prefer the fully plain version? Read [SIMPLE_STORY.md](SIMPLE_STORY.md) first
+> (5 minutes, no jargon). The rest of this document is the technical walkthrough
+> with every number and control.
+
+
 *Status: experimental campaign ~complete (3 cells pending, listed in §9). Target: ICLR
 (abstract ~Sep 19). This doc is the full technical walkthrough for review — every
 claim carries its number and its job trail. Raw evidence: `analysis/docs/results/`.*
