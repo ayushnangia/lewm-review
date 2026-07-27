@@ -67,8 +67,9 @@ ordering the inner models, each separately significant.
 **Nothing is hollowed out, and the task moves to the front.** The numbers past the
 cutoff still carry full information about the present (suffix readout 0.989, equal to
 full width), so this is genuine nesting, not shrinkage. And the block's position reads
-from the first 8 numbers at 0.43 accuracy vs 0.03 to 0.10 for every other variant: the
-front doll is where the task lives.
+from the first 16 numbers at 0.43 accuracy for the ordered dolls vs 0.10 for the
+monolith, with the unordered control in between at 0.33: the front doll is where the
+task lives, and ordering it is what puts the task there.
 
 ## 5. What a family can do that a loner cannot: disagree
 
@@ -77,17 +78,27 @@ actions. On real states they agree; the training sentence made them. On garbage
 embeddings nothing ever made them agree, and they do not.
 
 That disagreement is an internal alarm, and it catches exactly the failure from
-Symptom 3: it separates garbage goals from real ones at 0.92 to 1.00 detection on
-every garbage family, including the cases where every simple trick fails (on one
-model, embedding-norm and distance-to-center detectors fall to chance, 0.58, while the
-disagreement signal still reads 0.96). Monoliths have no usable analog of this signal,
-and even the random-groups variant only detects erratically (0.61 to 0.99). The
-reliable alarm needs the ordered dolls.
+Symptom 3. Calibrated on nothing but real goals, one threshold refuses 94.4% of
+garbage while wrongly refusing only 3.0% of real held-out goals (audited; 78.8% at
+8.0% on the second environment). Fairly implemented standard detectors
+(Mahalanobis, kNN, even a two-model ensemble) calibrate correctly and then miss the
+hard families almost entirely (0% on scrambled pixels where the alarm scores 100%).
+Monoliths have no usable analog of this signal, and even the random-groups variant
+only detects erratically. The reliable alarm needs the ordered dolls. The same
+signal, read during planning, predicts which plans will fail before acting (AUROC
+0.74). And composed end to end on a mixed goal stream, the gated planner keeps real
+throughput within noise while cutting garbage executions from 200 to 11.
 
 ## 6. Honesty box (all measured, all stated)
 
-- The score itself still prefers garbage; the alarm detects it, but we have not yet
-  wired the alarm into the planner. Detector demo, not yet a safer planner.
+- The score itself still prefers garbage; the alarm catches it. The closed-loop
+  numbers above are component-composed from archived measurements (independence
+  stated), not a live gated rollout.
+- Training small directly also plans well (a native 24-dim monolith hits 70.5, equal
+  to the big one). The dolls' value is one checkpoint serving every width plus the
+  alarm and confidence signals, which no monolith of any size supports.
+- The alarm's honest boundary: physically impossible collages of real frames mostly
+  slip through (16 to 22% caught). Far-off-manifold garbage is where it is sharp.
 - Coordinate frames still do not transfer across retrains: a readout trained on run A
   fails raw on run B for every variant (we predicted partial success and were wrong;
   recorded). What recurs across retrains is the SUBSPACE: the best rotation inside the
@@ -96,9 +107,11 @@ reliable alarm needs the ordered dolls.
 - The doll variants' full width reads a few points below monoliths on some runs
   (65 to 66.5 vs 70 to 71 on one seed; within noise averaged over seeds, reported
   anyway).
-- One environment carries all planning claims (the maze benchmark is provably unable
-  to measure planning, which we show); two planner families; two seeds; small models
-  (ViT-tiny, 192 dims). Scale is untested.
+- Two environments carry the planning claims (cube: three seeds; PushT: two seeds,
+  where the monolith falls from 92.5 to 4.5 and the fix holds 91.0 to 85.5); the maze
+  benchmark is provably unable to measure planning, which we show. Two planner
+  families. Small models (ViT-tiny, 192 dims); scale is untested. One uniform-arm
+  PushT retrain diverged (disclosed).
 - Encoder oversensitivity to tiny image shifts is unchanged by everything.
 
 ## 7. One breath
@@ -106,7 +119,7 @@ reliable alarm needs the ordered dolls.
 World models are monoliths: one unaccountable opinion, internals arranged by coin
 flip, no smaller self inside, no ability to doubt. One line of training turns the
 monolith into nested dolls sharing its numbers. The dolls are real: the small one runs
-the whole show at an eighth the size, on two planners and two seeds, and the gap
-decomposes into its two causes. And dolls can do what a loner cannot: when the inner
+the whole show at an eighth the size, on two environments, two planners and up to
+three seeds, and the gap decomposes into its two causes. And dolls can do what a loner cannot: when the inner
 doll and the whole disagree, the model has caught its own nonsense, including the fake
 goals its own score prefers.

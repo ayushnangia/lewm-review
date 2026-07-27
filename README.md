@@ -1,23 +1,6 @@
 # Co-author review document: Nested world models that can doubt themselves
 
-> **The story in 60 seconds (plain language):** A robot's world model squeezes each
-> camera image into 192 numbers and plans by imagining futures. We found that these
-> models are *monoliths*: nobody decides what each number means (train the same model
-> twice and the filing is pure coin flip), no smaller model exists inside one (a 94%
-> expert drops below random when you shrink its imagination), and it cannot doubt
-> itself (it rates TV static as an easier goal than a real photo). One added line of
-> training turns the monolith into Russian dolls: complete smaller models nested
-> inside the big one. The dolls are real - the small one plans as well as the whole
-> thing - and dolls can do what a loner cannot: **disagree**. When the inner doll and
-> the full model imagine different futures, the model has caught its own nonsense: it
-> refuses fake goals and flags its own doomed plans before acting.
->
-> Prefer the fully plain version? Read [SIMPLE_STORY.md](SIMPLE_STORY.md) first
-> (5 minutes, no jargon). The rest of this document is the technical walkthrough
-> with every number and control.
-
-
-*Status: experimental campaign ~complete (3 cells pending, listed in §9). Target: ICLR
+*Status: experimental campaign COMPLETE (all cells landed; final verdicts in §9). Target: ICLR
 (abstract ~Sep 19). This doc is the full technical walkthrough for review — every
 claim carries its number and its job trail. Raw evidence: `analysis/docs/results/`.*
 
@@ -79,7 +62,7 @@ re-fits anything.
 succeed half the time at this offset) and PushT (floor: 3.0% — 97 points of dynamic
 range). n=200 held-out start/goal pairs, deterministic splits, epoch-10-pinned
 checkpoints. All cross-arm comparisons are **paired** (identical 200 episodes; exact
-McNemar + 20k bootstrap). Per-episode outcome arrays for all 57 evaluations are
+McNemar + 20k bootstrap). Per-episode outcome arrays for all 72 evaluations are
 archived (`results/cube_episode_successes.json`).
 
 ---
@@ -117,7 +100,9 @@ A model that succeeds 94% of the time with all 192 numbers succeeds **1%** — b
 random — with its best 24. You can *read* a piece of a monolith; you cannot *run* a
 piece of one: every coordinate's dynamics depends on all the others. (Cube: 70 -> 54,
 floor 48, three seeds. The below-floor behavior on PushT means the broken imagination
-actively steers away from goals; diagnostic in flight, §9.)
+actively steers away from goals. The diagnostic landed and replicates on PushT:
+cost-only truncation keeps 86.0 while masked-rollout dies at 1.0 — the rollout is
+the collapse site on both environments, §9.)
 
 ### 3c. It cannot doubt itself
 
@@ -155,10 +140,11 @@ level. Both settings are reported everywhere; the trade-off is measured (§6).
 
 ![Figure 3 — the operability curve](figures/fig3_operability_curve.png)
 
-Cube (floor 48): stock models sit at 49–57% for every d < 192; ours plans at full
+Cube (floor 48): stock models sit at 46.5–61.5% for every d < 192 (worst cells at
+d=24, best stock cell 61.5 at d=96, all far below own full width); ours plans at full
 performance from d=16 (74.0 vs 73.5 own full width, p=1.0). Replicated on **three
 seeds** (monolith masked-24: 54.0 / 51.0 / 46.5; ours: 69–75) and on **PushT**
-(+88.5 points over the monolith at masked-24; McNemar p = 1e-53; in the 178 episodes
+(+88.5 points over the monolith at masked-24; McNemar p = 1e-53; in the 177 episodes
 where they disagree, ours wins **177–0**). Same pattern under a **gradient-based
 planner** (monolith 50/51/50, ours 71.5/72.0) and across a 10x CEM budget sweep — not
 a solver artifact.
@@ -206,7 +192,8 @@ Calibrate a threshold at the 95th percentile of delta on 128 held-out *real* goa
 - The monolith: **0.0–0.3% refused** — its delta carries nothing, at any threshold.
 - Unordered closure: 29–32% — ordering matters here too.
 - Baselines (Mahalanobis, kNN-10, a two-seed ensemble; implemented fairly after our
-  own audit — Ledoit-Wolf, split-half calibration; rerun in flight): none reached the
+  own audit — Ledoit-Wolf, split-half calibration; fair rerun landed, jobs 90627/90628,
+raw JSONs + full family matrices archived in results/fair_baselines_90627_90628/): none reached the
   alarm's operating point in our runs. Sharpest cell: on color-matched pixel-shuffled
   frames, **kNN detects 0%, the alarm 100%** — dynamics-consistency sees what encoder
   geometry cannot.
@@ -240,7 +227,8 @@ would be test-set selection).
 | plus three earlier mechanistic hypotheses | (ESS/autocorrelation; latent "repulsion" = linear-probe artifact; junk-slots story — corrected to redundant smear) |
 
 Six falsifications, three adversarial audit waves (which caught, among other things,
-three bugs that made our *baselines* unfairly weak — fixed, fair reruns in flight),
+three bugs that made our *baselines* unfairly weak — fixed, fair reruns landed and
+decisive: correctly calibrated baselines detect ~0% on the hard families),
 and one simulated 4-persona ICLR panel run twice: scores moved 4/5/5/5 -> 6/7/6/7 as
 the named gaps were closed.
 
@@ -254,27 +242,35 @@ the named gaps were closed.
 2. **Near-OOD passes the alarm** (16–22% caught) — the envelope is off-manifold junk.
 3. **d\* is environment-dependent**: the flat-width property is cube-specific; on
    PushT the uniform arm pays -14 at masked-24 vs its own full width (d\* > 24 there;
-   width curve in flight).
+   width curve landed: uniform d* on PushT is ~48–96 (87.5/92.0), fixed-level fine at
+   its designed 24; the flat-to-d=8 curve is cube-specific and we say so).
 4. **The sharpest alarm needs a designed operating level** (fixed-level arm: gate 94%,
    confidence 0.74; uniform arm: 76%, 0.60). Framing owns this; a multi-level
    aggregated alarm for the uniform arm is a proposed fix, untested.
 5. **Scale**: ViT-tiny, 192 dims, two toy manipulation environments, 2–3 seeds.
    No frozen-pretrained-encoder condition (staged; the identifiability argument is
    architecture-independent, the measurements are not).
-6. PushT's dramatic numbers are single-seed today (second seed training now).
+6. PushT is now two-seeded for the monolith and the fixed-level fix (seed-2: 92.5→4.5
+   collapse, 91.0→85.5 fix, d16 cliff 24.0 — both replicate); the uniform arm's seed-2
+   run diverged in training (NaN, disclosed) so its PushT numbers remain single-seed.
 
 ---
 
-## 9. Open cells (all in flight, none blocks the story)
+## 9. Final verdicts (campaign CLOSED - queue empty, nothing pending)
 
-| item | job | expected |
-|---|---|---|
-| fair-baseline reruns (Ledoit-Wolf, split-half) | 90627/90628 | final baseline table; claims rescope if baselines recover |
-| second PushT seed (3 arms) | 90631-39 | de-single-seeds the 94->1 headline |
-| native-24 monolith ("why not train small?") | 90322-25 | the size-question answer; a 24-dim monolith has no inner model and no alarm regardless |
-| PushT width curve (d=48/96) + below-floor diagnostic | 90630 | locates PushT d*; explains worse-than-random |
-| 3-seed-pair frame metrics (Fig-1 CI) | 90629 | error bars for Figure 1 |
-| goal-stream closed-loop table | (compose from archived arrays) | end-to-end gated-agent vs ungated-agent |
+| item | verdict |
+|---|---|
+| fair-baseline reruns (Ledoit-Wolf, split-half, kNN fix) | baselines now correctly calibrated (2-9.5% real refusal) AND near-blind on hard families (shuffled: 0.000 vs alarm 1.000; stitched 0.01-0.03 vs alarm 0.16). Comparison fair and decisive. Earlier "maha catches near-OOD" was a calibration artifact - retracted. |
+| second PushT seed | collapse replicates (92.5 -> 4.5); fixed-level fix replicates (91.0 -> 85.5, d16 cliff 24.0). HONEST CASUALTY: uniform-arm run diverged in training (NaN) - stability event recorded; retrain optional. |
+| native-24 monolith ("why not train small?") | 70.5 full width = the 192-dim monolith. Training small matches PLANNING performance; the nesting's value is stated precisely: every width in one checkpoint + the dissent signal (a small monolith has no inner model, no alarm). |
+| PushT width curve + below-floor diagnostic | cost-only truncation keeps 86.0 (vs 1.0 masked-rollout): the rollout is what dies, on env 2 as on cube (70.5). PushT d* for uniform ~ 48-96 (87.5/92.0); fixed-level 92.5/93.0. |
+| 3-seed-pair frame metrics (Fig-1 error bars) | Procrustes 0.581+-0.005 (stock) vs 0.253+-0.002 (ours) - separation ~50x its spread; identity correlation at null everywhere (why raw reuse fails). |
+| two-brains figure | rendered (fig_two_brains.png): no diagonal for ANY arm; ours' front block brightens - ordering recurs as a subspace, not a frame. |
+
+Optional items deferred (not blocking): cmatpred PushT seed-2 retrain, goal-stream
+closed-loop table (composable from archived arrays), multi-lag timescale curves,
+multi-level aggregated alarm, frozen-encoder condition, VICReg empirics (user-deferred;
+the invariance-class theory statement stands alone in RELATED_WORK).
 
 ## 10. Questions for you (the co-author)
 
