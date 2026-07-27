@@ -1,3 +1,5 @@
+<!-- GENERATED from analysis/evidence/THE_SIMPLE_STORY.md by scripts/build_review_packet.sh. Do not edit here. -->
+
 # The simple story, v3 (canonical): from monolith to Russian dolls
 
 One narrative, final numbers, everything measured. Supersedes v1/v2; the experiment
@@ -84,7 +86,25 @@ garbage while wrongly refusing only 3.0% of real held-out goals (audited; 78.8% 
 (Mahalanobis, kNN, even a two-model ensemble) calibrate correctly and then miss the
 hard families almost entirely (0% on scrambled pixels where the alarm scores 100%).
 Monoliths have no usable analog of this signal, and even the random-groups variant
-only detects erratically. The reliable alarm needs the ordered dolls. The same
+only detects erratically.
+
+> **Correction, 2026-07-27.** That detector list leaves out the one that works. The
+> **length of the embedding vector** — the simplest gate there is, available on a
+> monolith with no changes at all — refuses 72% of garbage on cube and 81% on the second
+> environment, and on the second environment it beats the alarm outright. So "monoliths
+> have no usable analog" is false as written: they have no analog of *this* signal, which
+> is not the same claim.
+>
+> What is still true, and is the real point: the norm asks "does this input look
+> unusual?" and the alarm asks "do my own dynamics still hold here?" — and those come
+> apart. Scramble a frame's pixels and its colours are untouched, so the norm sees
+> nothing (1–4.5%) while the alarm sees everything (100%). Jiggle a real frame and the
+> norm cries wolf (9.5–27%) while the alarm stays quiet (2.5–6.5%). Going the other way,
+> on frames stitched from two real halves the norm does better than the alarm. Two
+> different questions, two different blind spots.
+>
+> Full recomputed table and how it slipped through:
+> `results/CORRECTION_NORM_BASELINE_2026-07-27.md`. The reliable alarm needs the ordered dolls. The same
 signal, read during planning, predicts which plans will fail before acting (AUROC
 0.74). And composed end to end on a mixed goal stream, the gated planner keeps real
 throughput within noise while cutting garbage executions from 200 to 11.

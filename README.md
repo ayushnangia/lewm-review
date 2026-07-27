@@ -1,3 +1,5 @@
+<!-- GENERATED from analysis/evidence/COAUTHOR_REVIEW.md by scripts/build_review_packet.sh. Do not edit here. -->
+
 # Co-author review document: Nested world models that can doubt themselves
 
 *Status: experimental campaign COMPLETE (all cells landed; final verdicts in §9). Target: ICLR
@@ -197,11 +199,38 @@ raw JSONs + full family matrices archived in results/fair_baselines_90627_90628/
   alarm's operating point in our runs. Sharpest cell: on color-matched pixel-shuffled
   frames, **kNN detects 0%, the alarm 100%** — dynamics-consistency sees what encoder
   geometry cannot.
+
+> **CORRECTION, 2026-07-27 — read this before quoting the two bullets above.**
+> The baseline list omits the one baseline that works. The same JSONs
+> (`results/fair_baselines_90627_90628/`, key `gates/{family}/norm_refusal`) contain a
+> **latent-norm** detector, and on the *monolith* it refuses **72.1%** of the 5-family
+> garbage set on cube and **80.6%** on PushT. On the fix arms it reaches 90.2–99.2%,
+> and **on PushT it beats the alarm** (0.990 vs 0.915; 0.992 vs 0.510 on cmatpred).
+>
+> The "0.0–0.3%" bullet is therefore true only of **delta**, which a monolith cannot
+> compute — it has no second width to disagree with. Stated on its own it compares our
+> method against a quantity the baseline does not possess, and a reviewer will say so.
+>
+> How it hid: the fair-baseline audit was aimed at baselines being unfairly *weak*. It
+> fixed Mahalanobis and kNN, both of which stayed at 0.000, and the "baselines are
+> near-blind" conclusion was written from those two. `norm` was in the same table,
+> already working, and was never questioned. In the boundary bullet below it appears
+> only as an unnamed "naive gate".
+>
+> What actually survives, and is now the paper's claim (`../paper/02_FRAMING.md` §5.3):
+> a dissociation, not a sweep. On colour-matched shuffled frames the monolith's norm
+> detects **1.0%** (cube) / **4.5%** (PushT) and the alarm **100%** — the norm asks
+> whether an input is unusual, the alarm whether the dynamics still hold, and
+> Spearman(delta, kNN-10) = −0.007 says the same thing. And the norm false-alarms on
+> valid perturbed inputs at 9.5–27.0% against the alarm's 2.5–6.5%, so its threshold
+> cannot be placed.
 - **Measured boundary, stated with its number**: photometrically-real but physically
   impossible composites (stitched halves of two real frames) mostly pass (16–22%
   refused). The alarm's envelope is off-manifold garbage. Conversely, on *valid*
-  perturbed inputs the alarm stays at base-rate false-refusal (2.5–3.5%) where naive
-  gates false-alarm at 19–27% — selective, not just sensitive.
+  perturbed inputs the alarm stays at base-rate false-refusal (2.5–3.5%) where the
+  latent-norm gate false-alarms at 9.5–27.0% — selective, not just sensitive. (This
+  bullet said "naive gates" until 2026-07-27; the gate in question is the latent norm,
+  and naming it is the point — see the correction above.)
 
 ### 6b. Predicting its own failures before acting
 
@@ -260,7 +289,7 @@ the named gaps were closed.
 
 | item | verdict |
 |---|---|
-| fair-baseline reruns (Ledoit-Wolf, split-half, kNN fix) | baselines now correctly calibrated (2-9.5% real refusal) AND near-blind on hard families (shuffled: 0.000 vs alarm 1.000; stitched 0.01-0.03 vs alarm 0.16). Comparison fair and decisive. Earlier "maha catches near-OOD" was a calibration artifact - retracted. |
+| fair-baseline reruns (Ledoit-Wolf, split-half, kNN fix) | **VERDICT REVISED 2026-07-27 — see §6a correction.** Mahalanobis and kNN are correctly calibrated (2-9.5% real refusal) and near-blind on hard families (shuffled 0.000 vs alarm 1.000; stitched 0.01-0.03 vs alarm 0.16). Earlier "maha catches near-OOD" was a calibration artifact - retracted. **But "the baselines are near-blind" was written from those two only.** The latent-norm baseline, in the same JSONs, refuses 72.1%/80.6% of garbage on the MONOLITH and beats the alarm on PushT. The comparison is fair; it is not decisive on the mean. What is decisive is the dissociation (shuffled: monolith-norm 1.0-4.5% vs alarm 100%; jitter false alarms 9.5-27.0% vs 2.5-6.5%). |
 | second PushT seed | collapse replicates (92.5 -> 4.5); fixed-level fix replicates (91.0 -> 85.5, d16 cliff 24.0). HONEST CASUALTY: uniform-arm run diverged in training (NaN) - stability event recorded; retrain optional. |
 | native-24 monolith ("why not train small?") | 70.5 full width = the 192-dim monolith. Training small matches PLANNING performance; the nesting's value is stated precisely: every width in one checkpoint + the dissent signal (a small monolith has no inner model, no alarm). |
 | PushT width curve + below-floor diagnostic | cost-only truncation keeps 86.0 (vs 1.0 masked-rollout): the rollout is what dies, on env 2 as on cube (70.5). PushT d* for uniform ~ 48-96 (87.5/92.0); fixed-level 92.5/93.0. |
